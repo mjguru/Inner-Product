@@ -1,0 +1,67 @@
+Constants
+  a1 = 0.34;
+  c1 = 0.16;
+  a2 = 0.355;
+  c2 = 0.145;
+
+  THR  = 1e-15;
+  RLOW = 0.05;
+  LN2  = ln(2);
+
+Variables
+  p  in [0.25, 0.64];
+  q  in [0, 1.0];
+
+  /* v1, v2 are the positive roots of the cubics (modeled as variables) */
+  v1 in [0, 40000];
+  v2 in [0, 40000];
+
+  /* t = min(rate1, rate2) that we maximize */
+  t  in [0, 1];
+
+function log2(x)
+  return ln(x)/LN2;
+end
+
+function logx_upper(x)
+  return log2(max(x, THR));
+end
+
+function xlogx_lower(x)
+  return max(x, THR) * log2(max(x, THR));
+end
+
+function xlogx_upper(x)
+  return (x * log2(x));
+end
+
+
+function rate(p,q,v,a,c)
+  r = 1 - p - q;
+  u = (p*(2*sqr(v) + 1)) / (2*a - p);
+
+  line1 = -(xlogx_lower(p) + xlogx_lower(q) + xlogx_lower(r)) + q;
+  line2 = -2*c*log2(2*v + 1) - a*log2(u + 2*sqr(v) + 1);
+  line3 = (p/2)*logx_upper(u) + q*logx_upper(v);
+
+  return line1 + line2 + line3;
+end
+
+Minimize
+  -t;
+
+Constraints
+  /* original constraints */
+  0.75*p + q - 0.8 >= 0;
+  1 - p - q >= RLOW;
+
+  /* cubic equalities defining v1 and v2 */
+  4*(1 - p - q)*(v1^3) + 2*(2*a1 - p - q)*(v1^2) + 2*(2*c1 - q)*v1 - q = 0;
+  4*(1 - p - q)*(v2^3) + 2*(2*a2 - p - q)*(v2^2) + 2*(2*c2 - q)*v2 - q = 0;
+
+  /* maximize min(rate1, rate2) by pushing t up under both */
+  t <= rate(p,q,v1,a1,c1);
+  t <= rate(p,q,v2,a2,c2);
+end
+
+                                                                                                                           
